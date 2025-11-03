@@ -1,6 +1,6 @@
-# k6 Performance Testing Project
+# k6 Performance Testing Project (Local Execution)
 
-A production-ready k6 performance testing project with TypeScript support, following Grafana k6 best practices.
+A local-first k6 performance testing project with TypeScript support, following Grafana k6 best practices. The sample tests target an httpbin instance that you run yourself in Docker; no remote services or hosted CI pipelines are required.
 
 ## Features
 
@@ -11,14 +11,14 @@ A production-ready k6 performance testing project with TypeScript support, follo
 - ✅ **Example Tests** - HTTP API and browser testing examples
 - ✅ **Reusable Utilities** - HTTP client and helper functions
 - ✅ **Pre-configured Scenarios** - Load, stress, spike, and soak test templates
-- ✅ **HTML Reports** - Automatic HTML report generation with auto-open support
-- ✅ **Automated Workflows** - Sequential test execution with npm-run-all (clean → build → test → report)
+- ✅ **HTML Reports** - Automatic HTML report generation saved under `reports/`
+- ✅ **Sample CI Workflow** - Optional GitHub Actions example for sequential runs (disabled by default)
 
 ## Prerequisites
 
 - [k6](https://k6.io/docs/getting-started/installation/) installed on your system
 - Node.js 16+ and npm installed
-- [Docker](https://www.docker.com/get-started) installed and running
+- [Docker](https://www.docker.com/get-started) installed and running (required to host the local httpbin target)
 - For browser tests: k6 with browser extension (`xk6-browser`)
 
 ## Installation
@@ -44,7 +44,7 @@ sudo apt-get install k6
 winget install k6
 ```
 
-3. Start the httpbin Docker container (required for running tests):
+3. Start the httpbin Docker container (required for running tests locally):
 ```bash
 docker run -d -p 80:80 --name httpbin kennethreitz/httpbin
 ```
@@ -107,14 +107,14 @@ npm run build
 
 ### Run Tests
 
-All test commands automatically:
-1. Clean previous build artifacts and reports
-2. Create the `reports/` directory
-3. Build the TypeScript project
-4. Run the k6 test
-5. Generate HTML reports
+Each npm test script:
+1. Cleans previous build artifacts and reports
+2. Creates the `reports/` directory
+3. Builds the TypeScript project
+4. Runs the selected k6 bundle
+5. Generates a timestamped HTML report
 
-**Standard Test Commands** (runs test without opening report):
+**Available Test Commands:**
 ```bash
 npm run test:api      # API performance tests
 npm run test:browser  # Browser-based tests
@@ -122,16 +122,6 @@ npm run test:load     # Normal expected load
 npm run test:stress   # Beyond normal capacity
 npm run test:spike    # Sudden increase in load
 npm run test:soak     # Sustained load over extended period
-```
-
-**Full Test Commands** (runs test AND opens report automatically):
-```bash
-npm run test:api:full      # API tests + auto-open report
-npm run test:browser:full  # Browser tests + auto-open report
-npm run test:load:full     # Load test + auto-open report
-npm run test:stress:full   # Stress test + auto-open report
-npm run test:spike:full    # Spike test + auto-open report
-npm run test:soak:full     # Soak test + auto-open report
 ```
 
 **Run a specific bundled test directly:**
@@ -172,7 +162,7 @@ ls -lh reports/
 open reports/report-2025-11-03T18-38-57-941Z.html
 ```
 
-Each test generates a timestamped HTML report with:
+Each locally executed test generates a timestamped HTML report with:
 - Test execution summary
 - Metrics visualization (HTTP requests, duration, failures)
 - Threshold pass/fail status
@@ -316,6 +306,10 @@ Reports are automatically generated after each test run and include both console
 5. **Reuse Utilities** - Create reusable functions for common operations
 6. **Type Safety** - Leverage TypeScript for better code quality
 7. **Review Reports** - Always check HTML reports for detailed performance insights
+
+## GitHub Actions Sample (Optional)
+
+A reference workflow lives in `.github/workflows/k6-tests.yml`. It demonstrates how to run the bundled tests sequentially and upload HTML report artifacts, but it is intentionally scoped to a dummy branch so it will not execute unless you opt in.
 
 ## Resources
 

@@ -1,9 +1,10 @@
+# Sample GitHub Actions workflow for k6 tests (not enabled on main branches)
 name: k6 Test Suite
 
 on:
   push:
     branches:
-      - main
+      - ci-sample-workflow-only
   pull_request:
 
 jobs:
@@ -33,7 +34,9 @@ jobs:
       - name: Install browser dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libgtk-3-0 libnss3 libxss1 libasound2 libgbm1 libatk-bridge2.0-0 libcups2 libdrm2
+          sudo apt-get install -y xvfb libgtk-3-0 libnss3 libxss1 libgbm1 libcups2 libdrm2
+          sudo apt-get install -y libasound2 || sudo apt-get install -y libasound2t64
+          sudo apt-get install -y libatk-bridge2.0-0 || sudo apt-get install -y libatk-bridge2.0-0t64
 
       - name: Run API test
         id: api-test
