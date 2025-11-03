@@ -1,0 +1,51 @@
+{
+    "name": "k6-demo",
+    "version": "1.0.0",
+    "description": "k6 performance testing project with TypeScript",
+    "main": "index.js",
+    "scripts": {
+        "build": "webpack --mode production",
+        "build:dev": "webpack --mode development",
+        "prepare:reports": "mkdir -p reports",
+        "clean": "rm -rf dist reports",
+        "test:api:run": "k6 run dist/api.bundle.js",
+        "test:browser:run": "k6 run dist/browser.bundle.js",
+        "test:load:run": "k6 run dist/load.bundle.js",
+        "test:stress:run": "k6 run dist/stress.bundle.js",
+        "test:spike:run": "k6 run dist/spike.bundle.js",
+        "test:soak:run": "k6 run dist/soak.bundle.js",
+        "test:api": "run-s clean prepare:reports build test:api:run --continue-on-error",
+        "test:browser": "run-s clean prepare:reports build test:browser:run --continue-on-error",
+        "test:load": "run-s clean prepare:reports build test:load:run --continue-on-error",
+        "test:stress": "run-s clean prepare:reports build test:stress:run --continue-on-error",
+        "test:spike": "run-s clean prepare:reports build test:spike:run --continue-on-error",
+        "test:soak": "run-s clean prepare:reports build test:soak:run --continue-on-error",
+        "open:report": "open $(ls -t reports/report-*.html 2>/dev/null | head -1) || echo 'No report found. Run a test first.'",
+        "lint": "eslint src --ext .ts",
+        "lint:fix": "eslint src --ext .ts --fix",
+        "format": "prettier --write \"src/**/*.ts\"",
+        "format:check": "prettier --check \"src/**/*.ts\""
+    },
+    "keywords": [
+        "k6",
+        "performance-testing",
+        "load-testing",
+        "typescript"
+    ],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/k6": "^1.3.1",
+        "@typescript-eslint/eslint-plugin": "^8.46.2",
+        "@typescript-eslint/parser": "^8.46.2",
+        "eslint": "^9.39.0",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-prettier": "^5.5.4",
+        "npm-run-all": "^4.1.5",
+        "prettier": "^3.6.2",
+        "ts-loader": "^9.5.4",
+        "typescript": "^5.9.3",
+        "webpack": "^5.102.1",
+        "webpack-cli": "^6.0.1"
+    }
+}
