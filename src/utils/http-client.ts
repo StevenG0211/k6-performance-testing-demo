@@ -1,10 +1,10 @@
 import http from 'k6/http';
-import type { HttpRequestOptions, ApiResponse } from '../types';
+import type { HttpRequestOptions, ApiResponse } from '../types/index.ts';
 
 /**
  * Base URL for API requests (can be overridden via environment variable)
  */
-const BASE_URL = __ENV.BASE_URL || 'http://0.0.0.0:80';
+const BASE_URL = __ENV.BASE_URL || 'https://quickpizza.grafana.com';
 
 /**
  * Perform an HTTP GET request

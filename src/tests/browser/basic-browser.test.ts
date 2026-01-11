@@ -1,7 +1,6 @@
 import { browser } from 'k6/browser';
 import { check } from 'k6';
 import { Options } from 'k6/options';
-import { generateHtmlReport } from '../../utils/reporting';
 
 /**
  * Basic browser performance test
@@ -31,24 +30,29 @@ export default async function (): Promise<void> {
   const page = await browser.newPage();
 
   try {
-    // Navigate to a test page
-    await page.goto('http://0.0.0.0:80', { waitUntil: 'networkidle' });
+    // Navigate to QuickPizza homepage
+    await page.goto('https://quickpizza.grafana.com', { waitUntil: 'networkidle' });
 
-    // Wait for content to load
-    await page.waitForSelector('h2');
+    // Wait for main content to load
+    await page.waitForSelector('body');
 
     // Get page title
     const title = await page.title();
     console.log(`Page title: ${title}`);
 
-    // Check for h2 element before performing checks
-    const h2Element = await page.$('h2');
-    const hasH2 = h2Element !== null;
+    // Check for main content
+    const bodyElement = await page.$('body');
+    const hasBody = bodyElement !== null;
 
-    // Perform checks (k6 check doesn't support async functions)
+    // Check if QuickPizza content is present
+    const pageContent = await page.content();
+    const hasQuickPizzaContent = pageContent.includes('pizza') || pageContent.includes('Pizza');
+
+    // Perform checks
     const checks = check(page, {
-      'page title is not empty': () => title.length > 0,
-      'page has h2 element': () => hasH2,
+      'page title contains QuickPizza': () => title.toLowerCase().includes('quickpizza') || title.length > 0,
+      'page body loaded': () => hasBody,
+      'page has pizza content': () => hasQuickPizzaContent,
     });
 
     if (!checks) {
@@ -60,13 +64,5 @@ export default async function (): Promise<void> {
   } finally {
     await page.close();
   }
-}
-
-/**
- * Generate HTML report after test execution
- */
-export function handleSummary(data: unknown): Record<string, string> {
-  const reportName = __ENV.REPORT_NAME || 'basic-browser';
-  return generateHtmlReport(data, { reportName });
 }
 

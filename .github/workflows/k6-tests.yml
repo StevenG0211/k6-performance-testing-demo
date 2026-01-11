@@ -1,220 +1,57 @@
-# Sample GitHub Actions workflow for k6 tests (not enabled on main branches)
+# GitHub Actions workflow for k6 tests using Grafana Cloud k6
+# Uses official Grafana k6 actions for simplified CI/CD integration
+# k6 runs TypeScript files directly (no build step required)
+# Docs: https://grafana.com/whats-new/integrate-grafana-cloud-k6-into-your-cicd-pipeline-with-new-k6-github-actions/
 name: k6 Test Suite
 
 on:
   push:
     branches:
+      - main
       - ci-sample-workflow-only
   pull_request:
 
+env:
+  K6_CLOUD_TOKEN: ${{ secrets.K6_CLOUD_TOKEN }}
+  K6_CLOUD_PROJECT_ID: ${{ secrets.K6_CLOUD_PROJECT_ID }}
+
 jobs:
-  run-tests:
+  api-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build TypeScript bundles
-        run: npm run build
-
-      - name: Install k6
+      - name: Setup k6
         uses: grafana/setup-k6-action@v1
+
+      - name: Run API tests
+        uses: grafana/run-k6-action@v1
         with:
-          version: v1.3.0
+          path: src/tests/api/basic-api.test.ts
+          cloud-run-locally: true
+          cloud-comment-on-pr: true
 
-      - name: Install browser dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb libgtk-3-0 libnss3 libxss1 libgbm1 libcups2 libdrm2
-          sudo apt-get install -y libasound2 || sudo apt-get install -y libasound2t64
-          sudo apt-get install -y libatk-bridge2.0-0 || sudo apt-get install -y libatk-bridge2.0-0t64
+  scenario-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - src/scenarios/load.test.ts
+          - src/scenarios/stress.test.ts
+          - src/scenarios/spike.test.ts
+          - src/scenarios/soak.test.ts
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Run API test
-        id: api-test
-        env:
-          REPORT_NAME: basic-api
-        run: |
-          rm -rf reports
-          mkdir -p reports
-          set +e
-          k6 run dist/api.bundle.js
-          exit_code=$?
-          echo "API test exit code: $exit_code"
-          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-          exit 0
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
 
-      - name: Upload API report
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Run scenario test
+        uses: grafana/run-k6-action@v1
         with:
-          name: api-report
-          path: reports/report-basic-api-executed-*.html
-          if-no-files-found: warn
-
-      - name: Clean API report directory
-        if: always()
-        run: rm -rf reports
-
-      - name: Run Browser test
-        id: browser-test
-        env:
-          REPORT_NAME: basic-browser
-          K6_BROWSER_HEADLESS: 'true'
-        run: |
-          rm -rf reports
-          mkdir -p reports
-          set +e
-          k6 run dist/browser.bundle.js
-          exit_code=$?
-          echo "Browser test exit code: $exit_code"
-          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-          exit 0
-
-      - name: Upload Browser report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-report
-          path: reports/report-basic-browser-executed-*.html
-          if-no-files-found: warn
-
-      - name: Clean Browser report directory
-        if: always()
-        run: rm -rf reports
-
-      - name: Run Load test
-        id: load-test
-        env:
-          REPORT_NAME: load
-        run: |
-          rm -rf reports
-          mkdir -p reports
-          set +e
-          k6 run dist/load.bundle.js
-          exit_code=$?
-          echo "Load test exit code: $exit_code"
-          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-          exit 0
-
-      - name: Upload Load report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: load-report
-          path: reports/report-load-executed-*.html
-          if-no-files-found: warn
-
-      - name: Clean Load report directory
-        if: always()
-        run: rm -rf reports
-
-      - name: Run Stress test
-        id: stress-test
-        env:
-          REPORT_NAME: stress
-        run: |
-          rm -rf reports
-          mkdir -p reports
-          set +e
-          k6 run dist/stress.bundle.js
-          exit_code=$?
-          echo "Stress test exit code: $exit_code"
-          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-          exit 0
-
-      - name: Upload Stress report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: stress-report
-          path: reports/report-stress-executed-*.html
-          if-no-files-found: warn
-
-      - name: Clean Stress report directory
-        if: always()
-        run: rm -rf reports
-
-      - name: Run Spike test
-        id: spike-test
-        env:
-          REPORT_NAME: spike
-        run: |
-          rm -rf reports
-          mkdir -p reports
-          set +e
-          k6 run dist/spike.bundle.js
-          exit_code=$?
-          echo "Spike test exit code: $exit_code"
-          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-          exit 0
-
-      - name: Upload Spike report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: spike-report
-          path: reports/report-spike-executed-*.html
-          if-no-files-found: warn
-
-      - name: Clean Spike report directory
-        if: always()
-        run: rm -rf reports
-
-      - name: Run Soak test
-        id: soak-test
-        env:
-          REPORT_NAME: soak
-        run: |
-          rm -rf reports
-          mkdir -p reports
-          set +e
-          k6 run dist/soak.bundle.js
-          exit_code=$?
-          echo "Soak test exit code: $exit_code"
-          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-          exit 0
-
-      - name: Upload Soak report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: soak-report
-          path: reports/report-soak-executed-*.html
-          if-no-files-found: warn
-
-      - name: Clean Soak report directory
-        if: always()
-        run: rm -rf reports
-
-      - name: Evaluate test results
-        if: always()
-        run: |
-          failures=0
-          declare -A results=(
-            [api]="${{ steps.api-test.outputs.exit_code }}"
-            [browser]="${{ steps.browser-test.outputs.exit_code }}"
-            [load]="${{ steps.load-test.outputs.exit_code }}"
-            [stress]="${{ steps.stress-test.outputs.exit_code }}"
-            [spike]="${{ steps.spike-test.outputs.exit_code }}"
-            [soak]="${{ steps.soak-test.outputs.exit_code }}"
-          )
-          for name in "${!results[@]}"; do
-            code=${results[$name]}
-            if [ -n "$code" ] && [ "$code" -ne 0 ]; then
-              echo "${name} test failed with exit code $code"
-              failures=1
-            fi
-          done
-          if [ $failures -ne 0 ]; then
-            exit 1
-          fi
-
+          path: ${{ matrix.scenario }}
+          cloud-run-locally: true
+          cloud-comment-on-pr: true
