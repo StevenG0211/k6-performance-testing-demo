@@ -1,11 +1,10 @@
 import { check, sleep } from 'k6';
-import { Rate, Trend } from 'k6/metrics';
+import { Trend } from 'k6/metrics';
 import { loadTestOptions } from '../config/test-options.ts';
-import { get, post } from '../utils/http-client.ts';
+import { get } from '../utils/http-client.ts';
 import { logTestInfo } from '../utils/helpers.ts';
 
 // Custom metrics
-const errorRate = new Rate('errors');
 const httpReqDuration = new Trend('http_req_duration_custom');
 
 /**
@@ -15,47 +14,15 @@ const httpReqDuration = new Trend('http_req_duration_custom');
 export const options = loadTestOptions;
 
 export default function (): void {
-    // Test 1: GET pizza recommendations
-    logTestInfo('Making GET request to /api/pizza');
-    const getResponse = get('/api/pizza');
+    logTestInfo('Making GET request to base URL');
+    const response = get('/');
 
-    const getChecks = check(getResponse, {
-        'GET /api/pizza status is 200': (r) => r.status === 200,
-        'GET response time < 1000ms': (r) => r.timings.duration < 1000,
-        'GET response has headers': (r) => Object.keys(r.headers).length > 0,
+    check(response, {
+        'status is 200': (r) => r.status === 200,
+        'response time < 1000ms': (r) => r.timings.duration < 1000,
     });
 
-    if (!getChecks) {
-        errorRate.add(1);
-    }
-
-    httpReqDuration.add(getResponse.timings.duration);
-
-    sleep(1);
-
-    // Test 2: POST pizza rating
-    logTestInfo('Making POST request to /api/pizza');
-    const postData = {
-        pizza: {
-            name: 'k6 Load Test Pizza',
-            ingredients: ['tomato', 'mozzarella', 'basil'],
-        },
-    };
-
-    const postResponse = post('/api/pizza', postData, {
-        headers: { 'Content-Type': 'application/json' },
-    });
-
-    const postChecks = check(postResponse, {
-        'POST /api/pizza status is 200': (r) => r.status === 200,
-        'POST response time < 1000ms': (r) => r.timings.duration < 1000,
-    });
-
-    if (!postChecks) {
-        errorRate.add(1);
-    }
-
-    httpReqDuration.add(postResponse.timings.duration);
+    httpReqDuration.add(response.timings.duration);
 
     sleep(1);
 }

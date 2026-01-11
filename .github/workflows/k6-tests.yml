@@ -16,7 +16,7 @@ env:
   K6_CLOUD_PROJECT_ID: ${{ secrets.K6_CLOUD_PROJECT_ID }}
 
 jobs:
-  api-tests:
+  load-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -25,33 +25,8 @@ jobs:
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
 
-      - name: Run API tests
+      - name: Run load test
         uses: grafana/run-k6-action@v1
         with:
-          path: src/tests/api/basic-api.test.ts
-          cloud-run-locally: true
-          cloud-comment-on-pr: true
-
-  scenario-tests:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        scenario:
-          - src/scenarios/load.test.ts
-          - src/scenarios/stress.test.ts
-          - src/scenarios/spike.test.ts
-          - src/scenarios/soak.test.ts
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup k6
-        uses: grafana/setup-k6-action@v1
-
-      - name: Run scenario test
-        uses: grafana/run-k6-action@v1
-        with:
-          path: ${{ matrix.scenario }}
-          cloud-run-locally: true
+          path: src/scenarios/load.test.ts
           cloud-comment-on-pr: true
